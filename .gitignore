@@ -14,3 +14,6 @@
 .cxx
 .idea/*
 /build/*
+/app/build/*
+/mis_project_android/app/build/generated/
+/mis_project_android/openCVLibrary347/build/*
