@@ -15,5 +15,8 @@
 .idea/*
 /build/*
 /app/build/*
-/mis_project_android/app/build/generated/
+/mis_project_android/app/build/*
 /mis_project_android/openCVLibrary347/build/*
+/mis_project_android/.idea/*
+/mis_project_android/.gradle/*
+/mis_project_android/generated/*
