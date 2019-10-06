@@ -1,4 +1,4 @@
-package com.journaldev.barcodevisionapi;
+package com.stego.stegoscanner;
 
 import android.Manifest;
 import android.content.Context;
@@ -10,30 +10,33 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.FileProvider;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.vision.Frame;
-import com.google.android.gms.vision.barcode.Barcode;
-import com.google.android.gms.vision.barcode.BarcodeDetector;
+
+
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
+
 
 public class PictureBarcodeActivity extends AppCompatActivity implements View.OnClickListener {
 
     Button btnOpenCamera;
     TextView txtResultBody;
 
-    private BarcodeDetector detector;
+   // private BarcodeDetector detector;
     private Uri imageUri;
     private static final int REQUEST_CAMERA_PERMISSION = 200;
     private static final int CAMERA_REQUEST = 101;
@@ -55,14 +58,14 @@ public class PictureBarcodeActivity extends AppCompatActivity implements View.On
             }
         }
 
-        detector = new BarcodeDetector.Builder(getApplicationContext())
+        /*detector = new BarcodeDetector.Builder(getApplicationContext())
                 .setBarcodeFormats(Barcode.DATA_MATRIX | Barcode.QR_CODE)
                 .build();
 
         if (!detector.isOperational()) {
             txtResultBody.setText("Detector initialisation failed");
             return;
-        }
+        }*/
     }
 
     private void initViews() {
@@ -90,7 +93,7 @@ public class PictureBarcodeActivity extends AppCompatActivity implements View.On
         switch (requestCode) {
             case REQUEST_CAMERA_PERMISSION:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                    takeBarcodePicture();
+                    takeFramePicture();
                 } else {
                     Toast.makeText(getApplicationContext(), "Permission Denied!", Toast.LENGTH_SHORT).show();
                 }
@@ -99,11 +102,23 @@ public class PictureBarcodeActivity extends AppCompatActivity implements View.On
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == CAMERA_REQUEST && resultCode == RESULT_OK) {
-            launchMediaScanIntent();
+         //   launchMediaScanIntent();
             try {
-
-
+                Bitmap bitmap = decodeBitmapUri(this, imageUri);
+                Mat img =new Mat();
+                Utils.bitmapToMat(bitmap, img);
+             //   String lsb_decoder = LSB_decoder(img.getNativeObjAddr());
+             //   Toast.makeText(this, lsb_decoder, Toast.LENGTH_LONG).show();
+            } catch (IOException e) {
+                Toast.makeText(getApplicationContext(), "Failed to load Image", Toast.LENGTH_SHORT)
+                        .show();
+                Log.e(TAG, e.toString());
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+          /*  try {
                 Bitmap bitmap = decodeBitmapUri(this, imageUri);
                 if (detector.isOperational() && bitmap != null) {
                     Frame frame = new Frame.Builder().setBitmap(bitmap).build();
@@ -156,7 +171,7 @@ public class PictureBarcodeActivity extends AppCompatActivity implements View.On
                         }
                     }
                     if (barcodes.size() == 0) {
-                        txtResultBody.setText("No barcode could be detected. Please try again.");
+                        txtResultBody.setText("No Any Secrect could be detected. Please try again.");
                     }
                 } else {
                     txtResultBody.setText("Detector initialisation failed");
@@ -165,13 +180,13 @@ public class PictureBarcodeActivity extends AppCompatActivity implements View.On
                 Toast.makeText(getApplicationContext(), "Failed to load Image", Toast.LENGTH_SHORT)
                         .show();
                 Log.e(TAG, e.toString());
-            }
+            }*/
         }
     }
 
-    private void takeBarcodePicture() {
+    private void takeFramePicture() {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        File photo = new File(Environment.getExternalStorageDirectory(), "pic.jpg");
+        File photo = new File(Environment.getExternalStorageDirectory(), "pic.png");
         imageUri = FileProvider.getUriForFile(PictureBarcodeActivity.this,
                 BuildConfig.APPLICATION_ID + ".provider", photo);
         intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
@@ -209,4 +224,16 @@ public class PictureBarcodeActivity extends AppCompatActivity implements View.On
         return BitmapFactory.decodeStream(ctx.getContentResolver()
                 .openInputStream(uri), null, bmOptions);
     }
+
+    /**
+     * A native method that is implemented by the 'native-lib' native library,
+     * which is packaged with this application.
+     */
+
+    // Used to load the 'native-lib' library on application startup.
+    static {
+        System.loadLibrary("native-lib");
+    }
+
+    public native  String LSB_decoder(long  frame) ;
 }

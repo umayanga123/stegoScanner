@@ -1,12 +1,20 @@
-package com.journaldev.barcodevisionapi;
+package com.stego.stegoscanner;
 
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
+
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import org.opencv.android.OpenCVLoader;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+
+
 
     Button btnTakePicture, btnScanBarcode;
 
@@ -30,11 +38,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
             case R.id.btnTakePicture:
                 startActivity(new Intent(MainActivity.this, PictureBarcodeActivity.class));
-                break;
+               break;
             case R.id.btnScanBarcode:
                 startActivity(new Intent(MainActivity.this, ScannedBarcodeActivity.class));
                 break;
         }
 
     }
+
+
 }

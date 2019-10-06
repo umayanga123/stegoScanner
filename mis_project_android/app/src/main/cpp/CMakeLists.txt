@@ -38,7 +38,20 @@ find_library( # Sets the name of the path variable.
 
 target_link_libraries( # Specifies the target library.
                        native-lib
-
+                       lib_opencv
                        # Links the target library to the log library
                        # included in the NDK.
                        ${log-lib} )
+
+
+set(CMAKE_VERBOSE_MAKEFILE on)
+
+add_library(lib_opencv SHARED IMPORTED)
+
+set_target_properties(lib_opencv PROPERTIES IMPORTED_LOCATION
+        F:/stegoScanner/mis_project_android/app/src/main/jniLibs/${ANDROID_ABI}/libopencv_java3.so)
+
+
+include_directories(C:/ProgramData/SDK/OpenCV-android-sdk/sdk/native/jni/include)
+
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
