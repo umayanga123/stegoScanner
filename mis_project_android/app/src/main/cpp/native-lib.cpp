@@ -13,7 +13,7 @@ using namespace cv;
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_stego_stegoscanner_MainActivity_11_stringFromJNI(
-        JNIEnv* env,
+        JNIEnv *env,
         jobject /* this */) {
     std::string hello = "Hello from C++";
     return env->NewStringUTF(hello.c_str());
@@ -23,17 +23,42 @@ Java_com_stego_stegoscanner_MainActivity_11_stringFromJNI(
 extern "C"
 JNIEXPORT jstring JNICALL
 Java_com_stego_stegoscanner_MainActivity_12_adaptiveThresholdFromJNI(JNIEnv *env, jobject thiz,
-                                                                     jlong inputAdress, jlong outputAddress) {
-    Mat &input = *(Mat*) inputAdress;
-    Mat &output = *(Mat*) outputAddress;
+                                                                     jlong inputAdress,
+                                                                     jlong outputAddress) {
+    Mat &input = *(Mat *) inputAdress;
+    Mat &output = *(Mat *) outputAddress;
 
     clock_t begin = clock();
 
     cv::adaptiveThreshold(input, output, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY_INV, 21, 5);
 
-    double total_time = double (clock() - begin ) / CLOCKS_PER_SEC;
-    __android_log_print(ANDROID_LOG_INFO, "TAG", "adaptiveThreshold computation time = %f seconds\n",  total_time);
-    return  env->NewStringUTF(to_string(total_time).c_str());
+    double total_time = double(clock() - begin) / CLOCKS_PER_SEC;
+    __android_log_print(ANDROID_LOG_INFO, "TAG",
+                        "adaptiveThreshold computation time = %f seconds\n", total_time);
+    return env->NewStringUTF(to_string(total_time).c_str());
+}
+
+
+extern "C"
+JNIEXPORT Mat * JNICALL
+Java_com_stego_stegoscanner_MainActivity_12_getOneChanel(JNIEnv *env, jobject thiz,
+                                                         jlong inputAdress, jlong outputAddress) {
+    Mat &input = *(Mat *) inputAdress;
+    Mat &output = *(Mat *) outputAddress;
+
+
+
+    //Note: OpenCV uses BGR color order
+    ///output[0];
+    cv::Mat rgbchannel[3] ;
+    // The actual splitting.
+    split(input, rgbchannel);
+    //cv::namedWindow("Blue", CV_WINDOW_AUTOSIZE);
+    //imshow("blue", rgbchannel[0]);
+
+
+
+    return rgbchannel;
 }
 
 
@@ -53,7 +78,7 @@ extern "C"
 JNIEXPORT jstring JNICALL
 Java_com_stego_stegoscanner_MainActivity_12_LSB_1decoder(JNIEnv *env, jobject thiz, jlong frame) {
     // Stores original image
-    Mat &image = *(Mat*) frame;
+    Mat &image = *(Mat *) frame;
     if (image.empty()) {
         return env->NewStringUTF("ERROR");
     }
@@ -89,13 +114,14 @@ Java_com_stego_stegoscanner_MainActivity_12_LSB_1decoder(JNIEnv *env, jobject th
                     bit_count = 0;
                     msg += ch;
                     ch = 0;
-                }else {
+                } else {
                     ch = ch << 1;
                 }
 
             }
         }
-    }L2:;
+    }
+    L2:;
 
 
     image.release();
@@ -107,7 +133,7 @@ JNIEXPORT jstring JNICALL
 Java_com_stego_stegoscanner_PictureBarcodeActivity_LSB_1decoder(JNIEnv *env, jobject thiz,
                                                                 jlong frame) {
     /// Stores original image
-    Mat &image = *(Mat*) frame;
+    Mat &image = *(Mat *) frame;
     if (image.empty()) {
         return env->NewStringUTF("ERROR");
     }
@@ -143,15 +169,55 @@ Java_com_stego_stegoscanner_PictureBarcodeActivity_LSB_1decoder(JNIEnv *env, job
                     bit_count = 0;
                     msg += ch;
                     ch = 0;
-                }else {
+                } else {
                     ch = ch << 1;
                 }
 
             }
         }
-    }L2:;
+    }
+    L2:;
 
 
     image.release();
     return env->NewStringUTF(msg.c_str());
+}
+
+
+extern "C"
+JNIEXPORT void * JNICALL
+Java_com_stego_stegoscanner_ScannedBarcodeImageActivity_11_getOneChanel_11(JNIEnv *env,
+                                                                           jobject thiz,
+                                                                           jlong inputAdress,
+                                                                           jlong outputAddress) {
+    Mat &input = *(Mat *) inputAdress;
+  //  Mat &output = *(Mat *)outputAddress;
+    Mat* pMatDesc=(Mat*)outputAddress;
+
+   // Mat* output=(Mat*)outputAddress;
+
+    //Note: OpenCV uses BGR color order
+    ///output[0];
+    cv::Mat rgb[3] ;
+
+
+    // The actual splitting.s
+    split(input, rgb);
+
+    Mat *newMath = &rgb[0];
+
+    for (int y = 0; y < rgb[0].cols; y++) {
+            for (int x = 0; x < rgb[0].rows; x++) {
+                cv::Scalar pixel = rgb[0].at<uchar>(x, y);
+                if (pixel.val[0] != 0) {
+                    rgb[0].at<uchar>(x, y) = 255;
+                }
+           }
+    }
+
+//    imwrite("onle_chanel_lemma.png", output);
+//
+
+    pMatDesc = newMath;
+
 }

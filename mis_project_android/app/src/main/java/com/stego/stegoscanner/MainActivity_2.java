@@ -14,12 +14,16 @@ import org.opencv.android.JavaCamera2View;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Vector;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -131,9 +135,12 @@ public class MainActivity_2 extends AppCompatActivity implements CameraBridgeVie
             e.printStackTrace();
         }**/
 
-        Mat result = inputFrame.rgba();
 
-      //  String lsb_decoder = LSB_decoder(result.getNativeObjAddr());
+        List<Mat> bgr = new ArrayList<>();
+        Core.split(inputFrame.rgba(), bgr);
+        Mat mat = bgr.get(0);
+
+        //  String lsb_decoder = LSB_decoder(result.getNativeObjAddr());
        // Toast.makeText(this, lsb_decoder, Toast.LENGTH_LONG).show();
 
        // String s = adaptiveThresholdFromJNI(inputFrame.gray().getNativeObjAddr(), result.getNativeObjAddr());
@@ -147,7 +154,7 @@ public class MainActivity_2 extends AppCompatActivity implements CameraBridgeVie
       //  String lsb_decoder = LSB_decoder(result.getNativeObjAddr());
        // Toast.makeText(this, lsb_decoder, Toast.LENGTH_SHORT).show();
 
-        return result;
+        return mat;
     }
 
     /**
@@ -155,6 +162,8 @@ public class MainActivity_2 extends AppCompatActivity implements CameraBridgeVie
      * which is packaged with this application.
      */
     public native String adaptiveThresholdFromJNI(long input, long output);
+
+    public native Mat getOneChanel(long input, long output);
 
     // Used to load the 'native-lib' library on application startup.
     static {
