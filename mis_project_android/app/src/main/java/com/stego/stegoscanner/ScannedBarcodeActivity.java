@@ -49,20 +49,12 @@ public class ScannedBarcodeActivity extends AppCompatActivity {
         surfaceView = findViewById(R.id.surfaceView);
         btnAction = findViewById(R.id.btnAction);
 
-
         btnAction.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 if (intentData.length() > 0) {
-                    if (isEmail)
-                        startActivity(new Intent(ScannedBarcodeActivity.this, EmailActivity.class).putExtra("email_address", intentData));
-                    else {
-                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(intentData)));
-                    }
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(intentData)));
                 }
-
-
             }
         });
     }
@@ -80,12 +72,14 @@ public class ScannedBarcodeActivity extends AppCompatActivity {
                 .setAutoFocusEnabled(true) //you should add this feature
                 .build();
 
+
         surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
                 try {
                     if (ActivityCompat.checkSelfPermission(ScannedBarcodeActivity.this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                        cameraSource.start(surfaceView.getHolder());
+                        ScannedBarcodeActivity.this.cameraSource.start(surfaceView.getHolder());
+
                     } else {
                         ActivityCompat.requestPermissions(ScannedBarcodeActivity.this, new
                                 String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
@@ -117,6 +111,7 @@ public class ScannedBarcodeActivity extends AppCompatActivity {
 
             @Override
             public void receiveDetections(Detector.Detections<Barcode> detections) {
+
                 final SparseArray<Barcode> barcodes = detections.getDetectedItems();
                 if (barcodes.size() != 0) {
 
@@ -158,7 +153,5 @@ public class ScannedBarcodeActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         initialiseDetectorsAndSources();
-
-
     }
 }
