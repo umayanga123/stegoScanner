@@ -19,6 +19,11 @@ import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
+import java.security.PublicKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Arrays;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -120,26 +125,40 @@ public class ScannedBarcodeActivity extends AppCompatActivity {
 
                         @Override
                         public void run() {
-
-                            if (barcodes.valueAt(0).email != null) {
-                                txtBarcodeValue.removeCallbacks(null);
-                                intentData = barcodes.valueAt(0).email.address;
-                                txtBarcodeValue.setText(intentData);
-                                isEmail = true;
-                                btnAction.setText("ADD CONTENT TO THE MAIL");
-                            } else {
-                                isEmail = false;
-                                btnAction.setText("LAUNCH URL");
-                                intentData = barcodes.valueAt(0).displayValue;
-                                txtBarcodeValue.setText(intentData);
-
-                            }
+                            isEmail = false;
+                            btnAction.setText("LAUNCH URL");
+                            intentData = barcodes.valueAt(0).displayValue;
+                            String data = verifyData(intentData);
+                            txtBarcodeValue.setText(data);
                         }
                     });
 
                 }
             }
         });
+    }
+
+    public String verifyData(String data) {
+        boolean verify = false;
+        String[] values = data.split(",");
+        try {
+            System.out.println(Arrays.toString(values));
+            if (values.length >= 3) {
+                InputStream keyFile = getAssets().open(values[0] + ".pub");
+                PublicKey publicKey = SecurityHelper.getPublicKey(keyFile);
+                verify = SecurityHelper.verify(publicKey, values[1], values[2]);
+            } else {
+                verify = false;
+            }
+
+        } catch (IOException e) {
+            values[1] = "user not subscribed to service " + "\n" + values[1];
+            return values[1];
+        } catch (GeneralSecurityException e) {
+            e.printStackTrace();
+        }
+
+        return verify ? "The signature is authentic" + values[1] : "The signature is not authentic." + values[1];
     }
 
 
