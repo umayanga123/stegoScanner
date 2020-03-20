@@ -1,7 +1,10 @@
 <resources>
-    <string name="app_name">Stego-Scanner</string>
-    <string name="take_barcode_picture">Take Picture</string>
+    <string name="app_name">SVS App</string>
+    <string name="take_barcode_picture">Image Decode</string>
     <string name="scan_barcode">Scan Barcode</string>
-    <string name="open_camera">OPEN CAMERA</string>
-    <string name="exit">Exit</string>
+    <string name="open_camera">Open Camera</string>
+    <string name="recordButton">Scan Video</string>
+    <string name="playButton">Process Video</string>
+    <string name="btnTakeInfo">Video Decode</string>
+    <string name="exit">Close App</string>
 </resources>

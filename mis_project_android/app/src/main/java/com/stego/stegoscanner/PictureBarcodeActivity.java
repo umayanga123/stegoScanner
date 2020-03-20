@@ -69,7 +69,6 @@ public class PictureBarcodeActivity extends AppCompatActivity implements View.On
         detector = new BarcodeDetector.Builder(getApplicationContext())
                 .setBarcodeFormats(Barcode.DATA_MATRIX | Barcode.QR_CODE)
                 .build();
-
         if (!detector.isOperational()) {
             txtResultBody.setText("Detector initialisation failed");
             return;
@@ -180,48 +179,6 @@ public class PictureBarcodeActivity extends AppCompatActivity implements View.On
                                         Barcode code = barcodes.valueAt(index);
                                         txtResultBody.setText(txtResultBody.getText() + "\n" + code.displayValue + "\n");
 
-                                        int type = barcodes.valueAt(index).valueFormat;
-                                        switch (type) {
-                                            case Barcode.CONTACT_INFO:
-                                                Log.i(TAG, code.contactInfo.title);
-                                                break;
-                                            case Barcode.EMAIL:
-                                                Log.i(TAG, code.displayValue);
-                                                break;
-                                            case Barcode.ISBN:
-                                                Log.i(TAG, code.rawValue);
-                                                break;
-                                            case Barcode.PHONE:
-                                                Log.i(TAG, code.phone.number);
-                                                break;
-                                            case Barcode.PRODUCT:
-                                                Log.i(TAG, code.rawValue);
-                                                break;
-                                            case Barcode.SMS:
-                                                Log.i(TAG, code.sms.message);
-                                                break;
-                                            case Barcode.TEXT:
-                                                Log.i(TAG, code.displayValue);
-                                                break;
-                                            case Barcode.URL:
-                                                Log.i(TAG, "url: " + code.displayValue);
-                                                break;
-                                            case Barcode.WIFI:
-                                                Log.i(TAG, code.wifi.ssid);
-                                                break;
-                                            case Barcode.GEO:
-                                                Log.i(TAG, code.geoPoint.lat + ":" + code.geoPoint.lng);
-                                                break;
-                                            case Barcode.CALENDAR_EVENT:
-                                                Log.i(TAG, code.calendarEvent.description);
-                                                break;
-                                            case Barcode.DRIVER_LICENSE:
-                                                Log.i(TAG, code.driverLicense.licenseNumber);
-                                                break;
-                                            default:
-                                                Log.i(TAG, code.rawValue);
-                                                break;
-                                        }
                                     }
                                     if (barcodes.size() == 0) {
                                         txtResultBody.setText("No barcode could be detected. Please try again.");
@@ -288,12 +245,12 @@ public class PictureBarcodeActivity extends AppCompatActivity implements View.On
                 .openInputStream(uri), null, bmOptions);
     }
 
-    public native Mat decodeFrame(Mat input, Mat output);
+    //public native Mat decodeFrame(Mat input, Mat output);
 
     // Used to load the 'native-lib' library on application startup.
-    static {
+    /*static {
         System.loadLibrary("native-lib");
-    }
+    }*/
 
 
 }

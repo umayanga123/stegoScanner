@@ -6,9 +6,11 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.SparseArray;
+import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.webkit.URLUtil;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,11 +24,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
-import java.security.interfaces.RSAPublicKey;
-import java.util.Arrays;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NavUtils;
 
 public class ScannedBarcodeActivity extends AppCompatActivity {
 
@@ -38,15 +39,14 @@ public class ScannedBarcodeActivity extends AppCompatActivity {
     private static final int REQUEST_CAMERA_PERMISSION = 201;
     Button btnAction;
     String intentData = "";
-    boolean isEmail = false;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scan_barcode);
-
         initViews();
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
     private void initViews() {
@@ -57,7 +57,7 @@ public class ScannedBarcodeActivity extends AppCompatActivity {
         btnAction.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (intentData.length() > 0) {
+                if (intentData.length() > 0 &&  URLUtil.isValidUrl(intentData)) {
                     startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(intentData)));
                 }
             }
@@ -111,23 +111,17 @@ public class ScannedBarcodeActivity extends AppCompatActivity {
         barcodeDetector.setProcessor(new Detector.Processor<Barcode>() {
             @Override
             public void release() {
-                Toast.makeText(getApplicationContext(), "To prevent memory leaks barcode scanner has been stopped", Toast.LENGTH_SHORT).show();
-            }
+             }
 
             @Override
             public void receiveDetections(Detector.Detections<Barcode> detections) {
 
-                final SparseArray<Barcode> barcodes = detections.getDetectedItems();
-                if (barcodes.size() != 0) {
-
-
+                final SparseArray<Barcode> barCodes = detections.getDetectedItems();
+                if (barCodes.size() != 0) {
                     txtBarcodeValue.post(new Runnable() {
-
                         @Override
                         public void run() {
-                            isEmail = false;
-                            btnAction.setText("LAUNCH URL");
-                            intentData = barcodes.valueAt(0).displayValue;
+                            intentData = barCodes.valueAt(0).displayValue;
                             String data = verifyData(intentData);
                             txtBarcodeValue.setText(data);
                         }
@@ -142,7 +136,6 @@ public class ScannedBarcodeActivity extends AppCompatActivity {
         boolean verify = false;
         String[] values = data.split(",");
         try {
-            System.out.println(Arrays.toString(values));
             if (values.length >= 3) {
                 InputStream keyFile = getAssets().open(values[0] + ".pub");
                 PublicKey publicKey = SecurityHelper.getPublicKey(keyFile);
@@ -158,7 +151,7 @@ public class ScannedBarcodeActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        return verify ? "The signature is authentic" + values[1] : "The signature is not authentic." + values[1];
+        return verify ? "The signature is authentic" + values[1] : "The signature is not authentic." + values[0];
     }
 
 
@@ -166,11 +159,31 @@ public class ScannedBarcodeActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         cameraSource.release();
+        System.gc();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         initialiseDetectorsAndSources();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        System.gc();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                NavUtils.navigateUpFromSameTask(this);
+                cameraSource.release();
+                return true;
+            default:
+                cameraSource.release();
+                return super.onOptionsItemSelected(item);
+        }
     }
 }

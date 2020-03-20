@@ -7,6 +7,12 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin">
 
+    <ImageView
+        android:id="@+id/imageViewTwo"
+        android:layout_width="400dp"
+        android:layout_height="300dp"
+        android:src="@mipmap/logo_home"
+        android:contentDescription="View capture image" />
 
     <Button
         android:id="@+id/btnTakePicture"
@@ -14,15 +20,25 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
+        android:layout_below="@+id/imageViewTwo"
         android:text="@string/take_barcode_picture" />
+
+    <Button
+        android:id="@+id/btnTakeInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btnTakePicture"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:text="@string/btnTakeInfo" />
 
     <Button
         android:id="@+id/btnScanBarcode"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/btnTakePicture"
+        android:layout_below="@+id/btnTakeInfo"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="@dimen/activity_horizontal_margin"
+        android:layout_marginTop="16dp"
         android:text="@string/scan_barcode" />
 
     <Button
@@ -31,7 +47,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/btnScanBarcode"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="132dp"
+        android:layout_marginTop="16dp"
         android:gravity="center"
         android:text="@string/exit" />
 
