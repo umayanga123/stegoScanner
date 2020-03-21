@@ -25,10 +25,15 @@ import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
+import java.security.PublicKey;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -113,7 +118,7 @@ public class VideoPlayActivity extends AppCompatActivity {
 
 
             try {
-                Bitmap bitmap = decodeBitmapUri(this, imageUri);
+                Bitmap bitmap = decodeBitmapUri(this, imageUri,bmFrame);
 
                 int width = bitmap.getWidth();
                 int height = bitmap.getHeight();
@@ -164,7 +169,8 @@ public class VideoPlayActivity extends AppCompatActivity {
                         for (int index = 0; index < barCodes.size(); index++) {
                             txtResultBody2.setText("Finish");
                             Barcode code = barCodes.valueAt(index);
-                            txtResultBody2.setText(txtResultBody2.getText() + "\n" + code.displayValue + "\n");
+                            String data = verifyData(code.displayValue);
+                            txtResultBody2.setText(txtResultBody2.getText() + "\n" + data + "\n");
                             status = true;
                             return;
                         }
@@ -204,7 +210,12 @@ public class VideoPlayActivity extends AppCompatActivity {
 
     }
 
-    private Bitmap decodeBitmapUri(Context ctx, Uri uri) throws FileNotFoundException {
+    private Bitmap decodeBitmapUri(Context ctx, Uri uri,Bitmap bitmap) throws FileNotFoundException {
+
+        /*ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, bos);
+        byte[] bitmapdata = bos.toByteArray();
+        ByteArrayInputStream bs = new ByteArrayInputStream(bitmapdata);*/
 
         int targetW = 600;
         int targetH = 600;
@@ -221,5 +232,29 @@ public class VideoPlayActivity extends AppCompatActivity {
         return BitmapFactory.decodeStream(ctx.getContentResolver()
                 .openInputStream(uri), null, bmOptions);
     }
+
+
+    public String verifyData(String data) {
+        boolean verify = false;
+        String[] values = data.split(",");
+        try {
+            if (values.length >= 3) {
+                InputStream keyFile = getAssets().open(values[0] + ".pub");
+                PublicKey publicKey = SecurityHelper.getPublicKey(keyFile);
+                verify = SecurityHelper.verify(publicKey, values[1], values[2]);
+            } else {
+                verify = false;
+            }
+
+        } catch (IOException e) {
+            values[1] = "user not subscribed to service " + "\n" + values[1];
+            return values[1];
+        } catch (GeneralSecurityException e) {
+            e.printStackTrace();
+        }
+
+        return verify ? "The signature is authentic" + values[1] : "The signature is not authentic." + values[0];
+    }
+
 
 }

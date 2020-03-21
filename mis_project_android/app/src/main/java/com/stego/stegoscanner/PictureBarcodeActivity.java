@@ -244,12 +244,4 @@ public class PictureBarcodeActivity extends AppCompatActivity implements View.On
                 .openInputStream(uri), null, bmOptions);
     }
 
-    //public native Mat decodeFrame(Mat input, Mat output);
-
-    // Used to load the 'native-lib' library on application startup.
-    /*static {
-        System.loadLibrary("native-lib");
-    }*/
-
-
 }
