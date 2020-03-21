@@ -158,7 +158,9 @@ public class ScannedBarcodeActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        cameraSource.release();
+        if(cameraSource!=null){
+            cameraSource.release();
+        }
         System.gc();
     }
 
