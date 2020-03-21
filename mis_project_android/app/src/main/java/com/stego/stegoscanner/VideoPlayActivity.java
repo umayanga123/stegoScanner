@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
+import android.graphics.Color;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,6 +17,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.SparseArray;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
@@ -38,6 +40,7 @@ public class VideoPlayActivity extends AppCompatActivity {
     private BarcodeDetector barcodeDetector;
     private String TAG ="Save Image";
     private Uri imageUri;
+    private TextView txtResultBody2;
 
 
     @Override
@@ -45,6 +48,7 @@ public class VideoPlayActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_video_play);
         mVideoView =findViewById(R.id.videoView);
+        txtResultBody2 =findViewById(R.id.txtResultsBody2);
 
         barcodeDetector = new BarcodeDetector.Builder(getApplicationContext())
                 .setBarcodeFormats(Barcode.ALL_FORMATS)
@@ -55,22 +59,29 @@ public class VideoPlayActivity extends AppCompatActivity {
 
         MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
         mediaMetadataRetriever.setDataSource(getApplicationContext(),videoUri);
-        final Bitmap bmFrame = mediaMetadataRetriever.getFrameAtTime(500,OPTION_CLOSEST); //unit in microsecond
-
 
         mVideoView.setVideoURI(videoUri);
         mVideoView.start();
-        detectBarCode(bmFrame);
+        txtResultBody2.setText("Wait ...");
+
+        for(int i=0;i < 5;i++){
+            final Bitmap bmFrame = mediaMetadataRetriever.getFrameAtTime(i,OPTION_CLOSEST); //unit in microsecond
+            boolean detectBarCode = detectBarCode(bmFrame, i);
+          //  if(detectBarCode){
+            //    break;
+            //}
+        }
+
     }
 
 
-    private void detectBarCode(Bitmap bmFrame) {
+    private boolean detectBarCode(final Bitmap bmFrame , int i) {
         if (barcodeDetector.isOperational() && bmFrame != null) {
 
-            File pictureFile  = getOutputMediaFile();
+            File pictureFile = getOutputMediaFile(i);
             if (pictureFile == null) {
                 Log.d(TAG, "Error creating media file, check storage permissions: ");
-                return;
+                return false;
             }
             try {
                 FileOutputStream fos = new FileOutputStream(pictureFile);
@@ -90,42 +101,119 @@ public class VideoPlayActivity extends AppCompatActivity {
             }
 
 
-
-
-            Bitmap bitmap = null;
+          //  Bitmap bitmap = null;
             try {
-                bitmap = decodeBitmapUri(this,imageUri );
+                Bitmap bitmap = decodeBitmapUri(this, imageUri);
+
+                // String someValue = "Just a demo, really...";
+                new Thread(new Runnable() {
+                    public Bitmap bitmap;
+                    public int i;
+
+                    public Runnable init(Bitmap myParam ,int i) {
+                        this.bitmap = myParam;
+                        this.i =i;
+                        return this;
+                    }
+
+                    @Override
+                    public void run() {
+                        int width = bitmap.getWidth();
+                        int height = bitmap.getHeight();
+                        // create output bitmap
+                        final Bitmap bmOut = Bitmap.createBitmap(width, height, bitmap.getConfig());
+                        // color information
+                        int B;
+                        int pixel;
+
+                        // scan through all pixels
+                        for (int x = 0; x < width; ++x) {
+                            for (int y = 0; y < height; ++y) {
+                                // get pixel color
+                                pixel = bitmap.getPixel(x, y);
+                                B = Color.blue(pixel);
+                                int gray = (int) (B);
+
+                                // use 128 as threshold, above -> white, below -> black
+                                if (gray > 128) {
+                                    bmOut.setPixel(x, y, Color.argb(255, 255, 255, 255));
+                                } else {
+                                    bmOut.setPixel(x, y, Color.argb(255, 0, 0, 0));
+
+                                }
+                            }
+                        }
+
+                        /*String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmm").format(new Date());
+                        File mediaFile;
+                        String mImageName="MG_"+ timeStamp +""+ i + ".jpg";
+                        mediaFile = new File(Environment.getExternalStorageDirectory()+File.separator +"/SVSM/" + mImageName);
+                        FileOutputStream fos1 = null;
+                        try {
+                            fos1 = new FileOutputStream(mediaFile);
+                            bmOut.compress(Bitmap.CompressFormat.JPEG, 90, fos1);
+                            fos1.close();
+                        } catch (FileNotFoundException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }*/
+
+
+                        txtResultBody2.post(new Runnable() {
+                            public void run() {
+                                txtResultBody2.setText("Finish");
+
+
+                                Frame frame = new Frame.Builder().setBitmap(bmOut).build();
+
+                                SparseArray<Barcode> barcodes = barcodeDetector.detect(frame);
+                                for (int index = 0; index < barcodes.size(); index++) {
+                                    Barcode code = barcodes.valueAt(index);
+                                    txtResultBody2.setText(txtResultBody2.getText() + "\n" + code.displayValue + "\n");
+                                    return;
+                                }
+                                if (barcodes.size() == 0) {
+                                    txtResultBody2.setText("No barcode could be detected. Please try again.");
+                                }
+                            }
+                        });
+                    }
+                }.init(bitmap,i)).start();
+
+
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
-            Frame frame = new Frame.Builder().setBitmap(bitmap).build();
-
-            SparseArray<Barcode> barcodes = barcodeDetector.detect(frame);
-            for (int index = 0; index < barcodes.size(); index++) {
-                Barcode code = barcodes.valueAt(index);
-                Toast.makeText(getApplicationContext(), code.displayValue , Toast.LENGTH_LONG).show();
-            }
-            if (barcodes.size() == 0) {
-                Toast.makeText(getApplicationContext(), "No barcode could be detected. Please try again." , Toast.LENGTH_SHORT).show();
-            }
-        } else {
+        }else {
             Toast.makeText(getApplicationContext(), "Detector initialisation failed" , Toast.LENGTH_SHORT).show();
+            return false;
         }
+        return false;
     }
 
     /** Create a File for saving an image or video */
-    private  File getOutputMediaFile(){
+    private  File getOutputMediaFile(int i){
+        File folder = new File(Environment.getExternalStorageDirectory() +
+                File.separator + "SVSM");
+
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+
         // Create a media file name
         String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmm").format(new Date());
         File mediaFile;
-        String mImageName="MI_"+ timeStamp +".jpg";
-        mediaFile = new File(Environment.getExternalStorageDirectory()+ File.separator + mImageName);
+        String mImageName="MI_"+ timeStamp +""+ i + ".jpg";
+        mediaFile = new File(Environment.getExternalStorageDirectory()+File.separator +"/SVSM/" + mImageName);
+
         return mediaFile;
 
 
     }
 
     private Bitmap decodeBitmapUri(Context ctx, Uri uri) throws FileNotFoundException {
+
         int targetW = 600;
         int targetH = 600;
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();

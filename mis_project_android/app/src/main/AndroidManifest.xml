@@ -12,7 +12,7 @@
         android:hardwareAccelerated="false"
         android:largeHeap="true">
 
-        <activity android:name=".VideoPlayActivity"></activity>
+        <activity android:name=".VideoPlayActivity" android:screenOrientation="portrait"></activity>
         <activity android:name=".CameraAppActivity" android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

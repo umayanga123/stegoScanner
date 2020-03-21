@@ -26,7 +26,6 @@ import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
 
-import org.opencv.core.Mat;
 
 import java.io.File;
 import java.io.FileNotFoundException;
