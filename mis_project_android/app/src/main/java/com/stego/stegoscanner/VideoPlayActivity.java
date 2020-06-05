@@ -1,6 +1,5 @@
 package com.stego.stegoscanner;
 
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
@@ -11,6 +10,7 @@ import android.graphics.BitmapFactory;
 
 import android.graphics.Color;
 import android.media.MediaMetadataRetriever;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -21,12 +21,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
+import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -46,8 +45,7 @@ public class VideoPlayActivity extends AppCompatActivity {
     private String TAG = "Save Image";
     private Uri imageUri;
     private TextView txtResultBody2;
-    private Boolean status = false;
-
+    private Boolean status = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,11 +58,15 @@ public class VideoPlayActivity extends AppCompatActivity {
                 .setBarcodeFormats(Barcode.ALL_FORMATS)
                 .build();
 
-        Uri videoUri = Uri.parse(getIntent().getExtras().getString("videoUrl"));
+        final Uri videoUri = Uri.parse(getIntent().getExtras().getString("videoUrl"));
 
 
         MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
         mediaMetadataRetriever.setDataSource(getApplicationContext(), videoUri);
+
+        //
+        MediaPlayer mediaPlayer = MediaPlayer.create(getApplicationContext(), videoUri);
+        final int millis = mediaPlayer.getDuration();
 
         mVideoView.setVideoURI(videoUri);
         mVideoView.start();
@@ -72,6 +74,7 @@ public class VideoPlayActivity extends AppCompatActivity {
 
         new Thread(new Runnable() {
             public MediaMetadataRetriever mediaMetadataRetriever;
+
             public Runnable init(MediaMetadataRetriever mediaMetadataRetriever) {
                 this.mediaMetadataRetriever = mediaMetadataRetriever;
                 return this;
@@ -79,11 +82,11 @@ public class VideoPlayActivity extends AppCompatActivity {
 
             @Override
             public void run() {
-                for (int i = 0; i < 5; i++) {
-                    final Bitmap bmFrame = mediaMetadataRetriever.getFrameAtTime(i, OPTION_CLOSEST); //unit in microsecond
-                    detectBarCode(bmFrame, i);
+                for (int i = 1000000; i < millis * 1000; i += 1000000) {
                     if (status) {
-                        break;
+                        Bitmap bmFrame = mediaMetadataRetriever.getFrameAtTime(i, OPTION_CLOSEST);
+                        //saveFrames(i,bmFrame);
+                        detectBarCode(bmFrame, i);
                     }
                 }
             }
@@ -118,14 +121,15 @@ public class VideoPlayActivity extends AppCompatActivity {
 
 
             try {
-                Bitmap bitmap = decodeBitmapUri(this, imageUri,bmFrame);
+                Bitmap bitmap = decodeBitmapUri(this, imageUri);
 
                 int width = bitmap.getWidth();
                 int height = bitmap.getHeight();
                 // create output bitmap
                 final Bitmap bmOut = Bitmap.createBitmap(width, height, bitmap.getConfig());
+
                 // color information
-                int B;
+                int A, B;
                 int pixel;
 
                 // scan through all pixels
@@ -133,32 +137,18 @@ public class VideoPlayActivity extends AppCompatActivity {
                     for (int y = 0; y < height; ++y) {
                         // get pixel color
                         pixel = bitmap.getPixel(x, y);
+                        A = Color.alpha(pixel);
                         B = Color.blue(pixel);
                         int gray = (int) (B);
+                        //bmOut.setPixel(x, y, Color.argb(A, Color.red(pixel), Color.green(pixel), B));
 
                         // use 128 as threshold, above -> white, below -> black
                         if (gray > 128) {
-                            bmOut.setPixel(x, y, Color.argb(255, 255, 255, 255));
+                            bmOut.setPixel(x, y, Color.argb(A, 255, 255, 255));
                         } else {
-                            bmOut.setPixel(x, y, Color.argb(255, 0, 0, 0));
-
+                            bmOut.setPixel(x, y, Color.argb(A, 0, 0, 0));
                         }
                     }
-                }
-
-                String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmm").format(new Date());
-                File mediaFile;
-                String mImageName = "MG_" + timeStamp + "" + i + ".jpg";
-                mediaFile = new File(Environment.getExternalStorageDirectory() + File.separator + "/SVSM/" + mImageName);
-                FileOutputStream fos1 = null;
-                try {
-                    fos1 = new FileOutputStream(mediaFile);
-                    bmOut.compress(Bitmap.CompressFormat.JPEG, 90, fos1);
-                    fos1.close();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
 
 
@@ -171,10 +161,10 @@ public class VideoPlayActivity extends AppCompatActivity {
                             Barcode code = barCodes.valueAt(index);
                             String data = verifyData(code.displayValue);
                             txtResultBody2.setText(txtResultBody2.getText() + "\n" + data + "\n");
-                            status = true;
-                            return;
+                            status = false;
+                            break;
                         }
-                        if (barCodes.size() == 0) {
+                        if (status && barCodes.size() == 0) {
                             txtResultBody2.setText("No barcode could be detected. Please try again.");
                         }
                     }
@@ -185,6 +175,23 @@ public class VideoPlayActivity extends AppCompatActivity {
             }
         } else {
             Toast.makeText(getApplicationContext(), "Detector initialisation failed", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void saveFrames(int i, Bitmap bmOut) {
+        String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmm").format(new Date());
+        File mediaFile;
+        String mImageName = "MG_" + timeStamp + "" + i + ".jpg";
+        mediaFile = new File(Environment.getExternalStorageDirectory() + File.separator + "/SVSM/" + mImageName);
+        FileOutputStream fos1 = null;
+        try {
+            fos1 = new FileOutputStream(mediaFile);
+            bmOut.compress(Bitmap.CompressFormat.JPEG, 90, fos1);
+            fos1.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -210,12 +217,7 @@ public class VideoPlayActivity extends AppCompatActivity {
 
     }
 
-    private Bitmap decodeBitmapUri(Context ctx, Uri uri,Bitmap bitmap) throws FileNotFoundException {
-
-        /*ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, bos);
-        byte[] bitmapdata = bos.toByteArray();
-        ByteArrayInputStream bs = new ByteArrayInputStream(bitmapdata);*/
+    private Bitmap decodeBitmapUri(Context ctx, Uri uri) throws FileNotFoundException {
 
         int targetW = 600;
         int targetH = 600;
@@ -253,7 +255,7 @@ public class VideoPlayActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        return verify ? "The signature is authentic" + values[1] : "The signature is not authentic." + values[0];
+        return verify ? "The signature is authentic " + values[1] : "The signature is not authentic." + values[0];
     }
 
 

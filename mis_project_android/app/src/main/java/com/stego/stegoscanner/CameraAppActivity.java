@@ -6,10 +6,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.Toast;
-
-
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NavUtils;
@@ -19,22 +16,17 @@ public class CameraAppActivity extends AppCompatActivity{
 
     private static final int VIDEO_REQUEST = 101;
     private Uri videoUri = null;
-    private ImageView imageView;
-
-
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera_app);
-        imageView =findViewById(R.id.imageViewThree);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
     }
 
     public void captureVideo(View view) {
          Intent videoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
-
          if(videoIntent.resolveActivity(getPackageManager())!=null){
                 startActivityForResult(videoIntent,VIDEO_REQUEST);
          }

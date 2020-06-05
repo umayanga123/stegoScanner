@@ -53,7 +53,7 @@ public class SecurityHelper {
     }
 
     public static boolean verify(PublicKey publicKey, String message, String signature) throws SignatureException, NoSuchAlgorithmException, UnsupportedEncodingException, InvalidKeyException {
-        Signature sign = Signature.getInstance("SHA256withRSA");
+        Signature sign = Signature.getInstance("SHA1withRSA");
         sign.initVerify(publicKey);
         sign.update(message.getBytes("UTF-8"));
         return sign.verify(Base64.decode(signature, Base64.DEFAULT));

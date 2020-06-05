@@ -48,6 +48,7 @@ dependencies {
 
     // vision librry in google
     implementation 'com.google.android.gms:play-services-vision:19.0.0'
+    implementation 'com.google.zxing:core:3.4.0'
 
 
 }

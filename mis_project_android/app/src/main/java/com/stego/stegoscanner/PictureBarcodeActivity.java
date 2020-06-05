@@ -26,13 +26,14 @@ import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
 
-
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import androidx.annotation.NonNull;
-
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
@@ -118,13 +119,14 @@ public class PictureBarcodeActivity extends AppCompatActivity implements View.On
                 imageView.setImageBitmap(bitmap);
                 txtResultBody.setText("Wait ...");
 
-               // String someValue = "Just a demo, really...";
                 new Thread(new Runnable() {
-                    public   Bitmap bitmap;
-                    public Runnable init(Bitmap myParam ) {
+                    public Bitmap bitmap;
+
+                    public Runnable init(Bitmap myParam) {
                         this.bitmap = myParam;
                         return this;
                     }
+
                     @Override
                     public void run() {
                         int width = bitmap.getWidth();
@@ -171,6 +173,8 @@ public class PictureBarcodeActivity extends AppCompatActivity implements View.On
 
                                 //Detect bar code pattern
                                 if (detector.isOperational() && bmOut != null) {
+                                    saveFrames(0, bmOut);
+
                                     Frame frame = new Frame.Builder().setBitmap(bmOut).build();
 
                                     SparseArray<Barcode> barcodes = detector.detect(frame);
@@ -185,11 +189,8 @@ public class PictureBarcodeActivity extends AppCompatActivity implements View.On
                                 } else {
                                     txtResultBody.setText("Detector initialisation failed");
                                 }
-
-
                             }
                         });
-
 
 
                     }
@@ -244,4 +245,20 @@ public class PictureBarcodeActivity extends AppCompatActivity implements View.On
                 .openInputStream(uri), null, bmOptions);
     }
 
+    private void saveFrames(int i, Bitmap bmOut) {
+        String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmm").format(new Date());
+        File mediaFile;
+        String mImageName = "MG_" + timeStamp + "" + i + ".jpg";
+        mediaFile = new File(Environment.getExternalStorageDirectory() + File.separator + "/SVSM/" + mImageName);
+        FileOutputStream fos1 = null;
+        try {
+            fos1 = new FileOutputStream(mediaFile);
+            bmOut.compress(Bitmap.CompressFormat.JPEG, 90, fos1);
+            fos1.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

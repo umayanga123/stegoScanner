@@ -151,7 +151,7 @@ public class ScannedBarcodeActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        return verify ? "The signature is authentic" + values[1] : "The signature is not authentic." + values[0];
+        return verify ? "The signature is authentic. " + values[1] : "The signature is not authentic." + values[0];
     }
 
 
